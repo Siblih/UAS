@@ -193,7 +193,7 @@ packages:
     source: hosted
     version: "5.1.1"
   logging:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: logging
       sha256: c8245ada5f1717ed44271ed1c26b8ce85ca3228fd2ffdb75468ab01979309d61
@@ -312,6 +312,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.2"
+  random_string:
+    dependency: "direct main"
+    description:
+      name: random_string
+      sha256: "03b52435aae8cbdd1056cf91bfc5bf845e9706724dd35ae2e99fa14a1ef79d02"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.1"
   realtime_client:
     dependency: transitive
     description:
