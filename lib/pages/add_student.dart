@@ -55,14 +55,14 @@ class _AddStudentState extends State<AddStudent> {
                   onTap: () => Navigator.pop(context),
                   child: const Icon(Icons.arrow_back_ios_new_outlined),
                 ),
-                SizedBox(width: 80.0),
+                SizedBox(width: 60.0),
                 Text(
-                  "Data",
+                  widget.isEdit ? "Update" : "Tambahkan",
                   style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(width: 8.0),
                 Text(
-                  "Mahasiswa",
+                  "Data",
                   style: TextStyle(color: Colors.blue, fontSize: 24.0, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -86,7 +86,7 @@ class _AddStudentState extends State<AddStudent> {
             SizedBox(height: 10.0),
             _buildTextField(rollnoController, "Isi Semester"),
 
-            // Attendance
+            // Absensi
             SizedBox(height: 20.0),
             Text("Absensi", style: _labelStyle()),
             SizedBox(height: 10.0),
@@ -171,7 +171,7 @@ class _AddStudentState extends State<AddStudent> {
                     child: isLoading
                         ? CircularProgressIndicator(color: Colors.white)
                         : Text(
-                            widget.isEdit ? "Update" : "Add",
+                            widget.isEdit ? "Update" : "Tambahkan",
                             style: TextStyle(color: Colors.white, fontSize: 20.0, fontWeight: FontWeight.bold),
                           ),
                   ),
