@@ -5,7 +5,11 @@ import '../service/database.dart'; // Adjust the path based on the actual locati
 import 'package:flutter/material.dart';
 
 class AddStudent extends StatefulWidget {
-  const AddStudent({super.key});
+  final bool isEdit;
+final Map<String, dynamic>? studentData;
+
+const AddStudent({super.key, this.isEdit = false, this.studentData});
+
 
   @override
   State<AddStudent> createState() => _AddStudentState();

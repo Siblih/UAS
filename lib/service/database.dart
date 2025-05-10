@@ -19,6 +19,13 @@ class DatabaseMethods {
       throw Exception('Insert failed or returned no data');
     }
   }
+  Future<void> deleteStudent(String id) async {
+  await Supabase.instance.client
+      .from('students')
+      .delete()
+      .eq('id', id); // Sesuaikan dengan nama kolom ID di database
+}
+
 
   // Mengambil data mahasiswa dari Supabase
   Future<List<Map<String, dynamic>>> getStudents() async {
