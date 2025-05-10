@@ -71,6 +71,8 @@ class _HomeState extends State<Home> {
                       itemCount: students.length,
                       itemBuilder: (context, index) {
                         var student = students[index];
+                        String attendance = student['absensi'] ?? 'A'; // Default to 'A' if no attendance
+
                         return Container(
                           margin: EdgeInsets.only(bottom: 16.0),
                           child: Material(
@@ -165,7 +167,7 @@ class _HomeState extends State<Home> {
                                   Row(
                                     children: [
                                       Text(
-                                        "Attendance :",
+                                        "Absensi :",
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontSize: 18.0,
@@ -177,7 +179,9 @@ class _HomeState extends State<Home> {
                                         width: 50,
                                         padding: EdgeInsets.all(5.0),
                                         decoration: BoxDecoration(
-                                            color: Colors.green, borderRadius: BorderRadius.circular(10.0)),
+                                          color: attendance == 'H' ? Colors.green : Colors.grey,
+                                          borderRadius: BorderRadius.circular(10.0),
+                                        ),
                                         child: Center(
                                           child: Text(
                                             "H",
@@ -194,7 +198,9 @@ class _HomeState extends State<Home> {
                                         width: 50,
                                         padding: EdgeInsets.all(5.0),
                                         decoration: BoxDecoration(
-                                            color: Colors.red, borderRadius: BorderRadius.circular(10.0)),
+                                          color: attendance == 'A' ? Colors.red : Colors.grey,
+                                          borderRadius: BorderRadius.circular(10.0),
+                                        ),
                                         child: Center(
                                           child: Text(
                                             "A",
