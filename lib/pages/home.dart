@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:project_uas/pages/add_student.dart'; // Sesuaikan path sesuai proyek Anda
-import '../service/database.dart'; // Menambahkan referensi ke DatabaseMethods
+import 'package:intl/intl.dart';
+import 'package:project_uas/pages/add_student.dart';
+import '../service/database.dart';
+
+
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -11,6 +14,8 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   late Future<List<Map<String, dynamic>>> _students;
+  DateTime _selectedDate = DateTime.now();
+  final DateFormat _formatter = DateFormat('EEEE, dd MMMM yyyy', 'id_ID');
 
   @override
   void initState() {
@@ -18,8 +23,29 @@ class _HomeState extends State<Home> {
     _students = DatabaseMethods().getStudents();
   }
 
+  Future<void> _pickDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
+  String _formatShortDate(DateTime date) {
+    return DateFormat('yyyy-MM-dd').format(date);
+  }
+
   @override
   Widget build(BuildContext context) {
+    String shortDate = _formatShortDate(_selectedDate);
+
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.blue,
@@ -29,49 +55,74 @@ class _HomeState extends State<Home> {
         child: Icon(Icons.add, color: Colors.white),
       ),
       body: Container(
-        margin: EdgeInsets.only(top: 60.0, left: 20.0, right: 20.0),
+  margin: EdgeInsets.only(top: 60.0, left: 20.0, right: 20.0),
+  child: Column(
+    children: [
+      // Judul "Data Mahasiswa"
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            "Data ",
+            style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            "Mahasiswa",
+            style: TextStyle(
+              color: Colors.blue,
+              fontSize: 26.0,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+      SizedBox(height: 40.0),
+      Center(
         child: Column(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Data",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 24.0,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(width: 8.0),
-                Text(
-                  "Mahasiswa",
-                  style: TextStyle(
-                    color: Colors.blue,
-                    fontSize: 24.0,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+            Text(
+              _formatter.format(_selectedDate),
+              style: TextStyle(fontSize: 22.0, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
             ),
-            SizedBox(height: 30.0),
+            SizedBox(height: 8.0),
+            ElevatedButton.icon(
+              onPressed: _pickDate,
+              icon: Icon(Icons.calendar_today),
+              label: Text("Pilih Tanggal"),
+            ),
+          ],
+        ),
+      ),
+     
+      
+      // (lanjutkan ke FutureBuilder seperti sebelumnya...)
+
+            
             FutureBuilder<List<Map<String, dynamic>>>(
               future: _students,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
+                  return Center(child: Text('Error: \${snapshot.error}'));
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return Center(child: Text('Tidak ada data mahasiswa.'));
                 } else {
-                  final students = snapshot.data!;
+                  final students = snapshot.data!
+                      .where((student) => student['absensi_tanggal'] == shortDate)
+                      .toList();
+
+                  if (students.isEmpty) {
+                    return Expanded(child: Center(child: Text("Tidak ada data pada tanggal ini.")));
+                  }
+
                   return Expanded(
                     child: ListView.builder(
                       itemCount: students.length,
                       itemBuilder: (context, index) {
                         var student = students[index];
-                        String attendance = student['absensi'] ?? 'A'; // Default to 'A' if no attendance
+                        String attendance = student['absensi'] ?? 'A';
 
                         return Container(
                           margin: EdgeInsets.only(bottom: 16.0),
@@ -89,8 +140,7 @@ class _HomeState extends State<Home> {
                                 children: [
                                   Row(
                                     children: [
-                                      Text(
-                                        "Nama Mahasiswa :",
+                                      Text("Nama Mahasiswa :",
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontSize: 18.0,
@@ -114,8 +164,7 @@ class _HomeState extends State<Home> {
                                   SizedBox(height: 5.0),
                                   Row(
                                     children: [
-                                      Text(
-                                        "NIM :",
+                                      Text("NIM :",
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontSize: 18.0,
@@ -141,8 +190,7 @@ class _HomeState extends State<Home> {
                                   SizedBox(height: 5.0),
                                   Row(
                                     children: [
-                                      Text(
-                                        "Semester :",
+                                      Text("Semester :",
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontSize: 18.0,
@@ -166,8 +214,7 @@ class _HomeState extends State<Home> {
                                   SizedBox(height: 5.0),
                                   Row(
                                     children: [
-                                      Text(
-                                        "Absensi :",
+                                      Text("Absensi :",
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontSize: 18.0,
@@ -175,45 +222,37 @@ class _HomeState extends State<Home> {
                                         ),
                                       ),
                                       SizedBox(width: 16.0),
-                                      Container(
-                                        width: 50,
-                                        padding: EdgeInsets.all(5.0),
-                                        decoration: BoxDecoration(
-                                          color: attendance == 'H' ? Colors.green : Colors.grey,
-                                          borderRadius: BorderRadius.circular(10.0),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            "H",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 20.0,
-                                              fontWeight: FontWeight.bold,
+                                      for (var absen in ['H', 'A', 'I'])
+                                        Padding(
+                                          padding: EdgeInsets.only(right: 10.0),
+                                          child: Container(
+                                            width: 50,
+                                            padding: EdgeInsets.all(5.0),
+                                            decoration: BoxDecoration(
+                                              color: attendance == absen
+                                                  ? (absen == 'H'
+                                                      ? Colors.green
+                                                      : absen == 'A'
+                                                          ? Colors.red
+                                                          : Color.fromARGB(255, 228, 244, 54))
+                                                  : Colors.grey,
+                                              borderRadius: BorderRadius.circular(10.0),
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                absen,
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 20.0,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                      SizedBox(width: 20.0),
-                                      Container(
-                                        width: 50,
-                                        padding: EdgeInsets.all(5.0),
-                                        decoration: BoxDecoration(
-                                          color: attendance == 'A' ? Colors.red : Colors.grey,
-                                          borderRadius: BorderRadius.circular(10.0),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            "A",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 20.0,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
                                     ],
                                   ),
+                                  
                                   SizedBox(height: 10.0),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.end,

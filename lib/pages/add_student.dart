@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:random_string/random_string.dart';
+import 'package:intl/intl.dart';
 import '../service/database.dart';
 
 class AddStudent extends StatefulWidget {
@@ -18,7 +19,7 @@ class _AddStudentState extends State<AddStudent> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController ageController = TextEditingController(); // NIM
   final TextEditingController rollnoController = TextEditingController(); // Semester
-  String attendanceStatus = 'H';
+  String attendanceStatus = 'H'; // Default attendance is 'H' (Hadir)
   bool isLoading = false;
 
   @override
@@ -47,8 +48,8 @@ class _AddStudentState extends State<AddStudent> {
         margin: EdgeInsets.only(top: 60.0, left: 20.0, right: 20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          
           children: [
-            // Header
             Row(
               children: [
                 GestureDetector(
@@ -58,35 +59,30 @@ class _AddStudentState extends State<AddStudent> {
                 SizedBox(width: 60.0),
                 Text(
                   widget.isEdit ? "Update" : "Tambahkan",
-                  style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(width: 8.0),
                 Text(
                   "Data",
-                  style: TextStyle(color: Colors.blue, fontSize: 24.0, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: Colors.blue, fontSize: 26.0, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
-            SizedBox(height: 20.0),
-
-            // Nama
+            SizedBox(height: 80.0),
             Text("Nama Mahasiswa", style: _labelStyle()),
             SizedBox(height: 10.0),
             _buildTextField(nameController, "Isi Nama"),
 
-            // NIM
             SizedBox(height: 20.0),
             Text("NIM", style: _labelStyle()),
             SizedBox(height: 10.0),
             _buildTextField(ageController, "Isi NIM"),
 
-            // Semester
             SizedBox(height: 20.0),
             Text("Semester", style: _labelStyle()),
             SizedBox(height: 10.0),
             _buildTextField(rollnoController, "Isi Semester"),
 
-            // Absensi
             SizedBox(height: 20.0),
             Text("Absensi", style: _labelStyle()),
             SizedBox(height: 10.0),
@@ -97,15 +93,14 @@ class _AddStudentState extends State<AddStudent> {
                   attendanceStatus = newValue!;
                 });
               },
-              items: <String>['H', 'A'].map((String value) {
+              items: <String>['H', 'A', 'I'].map((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
-                  child: Text(value == 'H' ? 'Hadir' : 'Alpha'),
+                  child: Text(value == 'H' ? 'Hadir' : value == 'A' ? 'Alpha' : 'Izin'),
                 );
               }).toList(),
             ),
 
-            // Tombol Simpan
             SizedBox(height: 40.0),
             Center(
               child: GestureDetector(
@@ -120,12 +115,15 @@ class _AddStudentState extends State<AddStudent> {
                       "nim": ageController.text,
                       "semester": rollnoController.text,
                       "absensi": attendanceStatus,
+                      "absensi_tanggal": DateFormat('yyyy-MM-dd').format(DateTime.now()),
                     };
 
                     try {
                       if (widget.isEdit && widget.studentData != null) {
+                        // Update the existing student
                         await DatabaseMethods().updateStudent(widget.studentData!['id'], studentInfoMap);
                       } else {
+                        // Add a new student
                         String addID = randomAlphaNumeric(10);
                         await DatabaseMethods().addStudent(studentInfoMap, addID);
                       }
@@ -140,7 +138,7 @@ class _AddStudentState extends State<AddStudent> {
                         ),
                       );
 
-                      Navigator.pop(context); // kembali ke halaman sebelumnya
+                      Navigator.pop(context); // Go back after saving
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
