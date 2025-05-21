@@ -1,9 +1,11 @@
+// ignore_for_file: use_build_context_synchronously, sort_child_properties_last
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:project_uas/pages/add_student.dart';
+import 'package:project_uas/pages/face_detection.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../service/database.dart';
-
-
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -47,65 +49,63 @@ class _HomeState extends State<Home> {
     String shortDate = _formatShortDate(_selectedDate);
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blue,
-        onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => AddStudent()));
-        },
-        child: Icon(Icons.add, color: Colors.white),
-      ),
       body: Container(
-  margin: EdgeInsets.only(top: 60.0, left: 20.0, right: 20.0),
-  child: Column(
-    children: [
-      // Judul "Data Mahasiswa"
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            "Data ",
-            style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.bold),
-          ),
-          Text(
-            "Mahasiswa",
-            style: TextStyle(
-              color: Colors.blue,
-              fontSize: 26.0,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-      SizedBox(height: 40.0),
-      Center(
+        margin: EdgeInsets.only(top: 60.0, left: 20.0, right: 20.0),
         child: Column(
           children: [
-            Text(
-              _formatter.format(_selectedDate),
-              style: TextStyle(fontSize: 22.0, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Data ",
+                  style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  "Mahasiswa",
+                  style: TextStyle(
+                    color: Colors.blue,
+                    fontSize: 26.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
-            SizedBox(height: 8.0),
-            ElevatedButton.icon(
-              onPressed: _pickDate,
-              icon: Icon(Icons.calendar_today),
-              label: Text("Pilih Tanggal"),
+            SizedBox(height: 40.0),
+            Center(
+              child: Column(
+                children: [
+                  Text(
+                    _formatter.format(_selectedDate),
+                    style: TextStyle(fontSize: 22.0, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 8.0),
+                  ElevatedButton.icon(
+                    onPressed: _pickDate,
+                    icon: Icon(Icons.calendar_today),
+                    label: Text("Pilih Tanggal"),
+                  ),
+                  SizedBox(height: 12.0),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const FaceDetectionPage()),
+                      );
+                    },
+                    icon: Icon(Icons.face),
+                    label: Text("Deteksi Wajah"),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
-     
-      
-      // (lanjutkan ke FutureBuilder seperti sebelumnya...)
-
-            
             FutureBuilder<List<Map<String, dynamic>>>(
               future: _students,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: \${snapshot.error}'));
+                  return Center(child: Text('Error: ${snapshot.error}'));
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return Center(child: Text('Tidak ada data mahasiswa.'));
                 } else {
@@ -126,164 +126,147 @@ class _HomeState extends State<Home> {
 
                         return Container(
                           margin: EdgeInsets.only(bottom: 16.0),
-                          child: Material(
-                            elevation: 3.0,
-                            borderRadius: BorderRadius.circular(10.0),
-                            child: Container(
-                              padding: EdgeInsets.only(left: 20.0, top: 10.0, bottom: 10.0, right: 10.0),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(10.0),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.blue.shade50, Colors.white],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 6.0,
+                                offset: Offset(0, 3),
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text("Nama Mahasiswa :",
+                            ],
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor: Colors.blue.shade200,
+                                      child: Icon(Icons.person, color: Colors.white),
+                                    ),
+                                    SizedBox(width: 12.0),
+                                    Expanded(
+                                      child: Text(
+                                        student['nama'] ?? "Tidak ada nama",
                                         style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 18.0,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      SizedBox(width: 3.0),
-                                      Expanded(
-                                        child: Text(
-                                          student['nama'] ?? "Tidak ada nama",
-                                          style: TextStyle(
-                                            color: Colors.blue,
-                                            fontSize: 18.0,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 5.0),
-                                  Row(
-                                    children: [
-                                      Text("NIM :",
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 18.0,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      SizedBox(width: 3.0),
-                                      Expanded(
-                                        child: Text(
-                                          (student['nim'] is int)
-                                              ? student['nim'].toString()
-                                              : student['nim'] ?? "Tidak ada NIM",
-                                          style: TextStyle(
-                                            color: Colors.blue,
-                                            fontSize: 18.0,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 5.0),
-                                  Row(
-                                    children: [
-                                      Text("Semester :",
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 18.0,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      SizedBox(width: 3.0),
-                                      Expanded(
-                                        child: Text(
-                                          student['semester'] ?? "Tidak ada semester",
-                                          style: TextStyle(
-                                            color: Colors.blue,
-                                            fontSize: 18.0,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 5.0),
-                                  Row(
-                                    children: [
-                                      Text("Absensi :",
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 18.0,
+                                          fontSize: 20.0,
                                           fontWeight: FontWeight.bold,
+                                          color: Colors.blue.shade700,
                                         ),
                                       ),
-                                      SizedBox(width: 16.0),
-                                      for (var absen in ['H', 'A', 'I'])
-                                        Padding(
-                                          padding: EdgeInsets.only(right: 10.0),
-                                          child: Container(
-                                            width: 50,
-                                            padding: EdgeInsets.all(5.0),
-                                            decoration: BoxDecoration(
-                                              color: attendance == absen
-                                                  ? (absen == 'H'
-                                                      ? Colors.green
-                                                      : absen == 'A'
-                                                          ? Colors.red
-                                                          : Color.fromARGB(255, 228, 244, 54))
-                                                  : Colors.grey,
-                                              borderRadius: BorderRadius.circular(10.0),
-                                            ),
-                                            child: Center(
-                                              child: Text(
-                                                absen,
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 20.0,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
+                                    ),
+                                  ],
+                                ),
+                                Divider(height: 20.0, color: Colors.blue.shade100),
+                                Row(
+                                  children: [
+                                    Text(
+                                      "NIM: ",
+                                      style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600),
+                                    ),
+                                    Flexible(
+                                      child: Text(
+                                        (student['nim'] is int)
+                                            ? student['nim'].toString()
+                                            : student['nim'] ?? "Tidak ada NIM",
+                                        style: TextStyle(fontSize: 16.0),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 4.0),
+                                Row(
+                                  children: [
+                                    Text(
+                                      "Semester: ",
+                                      style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600),
+                                    ),
+                                    Flexible(
+                                      child: Text(
+                                        student['semester'] ?? "Tidak ada semester",
+                                        style: TextStyle(fontSize: 16.0),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 10.0),
+                                Row(
+                                  children: [
+                                    Text("Absensi:",
+                                        style: TextStyle(
+                                            fontSize: 18.0,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black87)),
+                                    SizedBox(width: 12.0),
+                                    for (var absen in ['H', 'A', 'I'])
+                                      Padding(
+                                        padding: EdgeInsets.only(right: 10.0),
+                                        child: Container(
+                                          width: 50,
+                                          padding: EdgeInsets.all(6.0),
+                                          decoration: BoxDecoration(
+                                            color: attendance == absen
+                                                ? (absen == 'H'
+                                                    ? Colors.green
+                                                    : absen == 'A'
+                                                        ? Colors.red
+                                                        : Colors.yellow.shade700)
+                                                : Colors.grey.shade300,
+                                            borderRadius: BorderRadius.circular(8.0),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              absen,
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
                                               ),
                                             ),
                                           ),
                                         ),
-                                    ],
-                                  ),
-                                  
-                                  SizedBox(height: 10.0),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      IconButton(
-                                        icon: Icon(Icons.edit, color: Colors.orange),
-                                        onPressed: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => AddStudent(
-                                                isEdit: true,
-                                                studentData: student,
-                                              ),
+                                      ),
+                                  ],
+                                ),
+                                SizedBox(height: 12.0),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(Icons.edit, color: Colors.orange),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => AddStudent(
+                                              isEdit: true,
+                                              studentData: student,
                                             ),
-                                          );
-                                        },
-                                      ),
-                                      IconButton(
-                                        icon: Icon(Icons.delete, color: Colors.red),
-                                        onPressed: () async {
-                                          await DatabaseMethods().deleteStudent(student['id']);
-                                          setState(() {
-                                            _students = DatabaseMethods().getStudents();
-                                          });
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: Icon(Icons.delete, color: Colors.red),
+                                      onPressed: () async {
+                                        await DatabaseMethods().deleteStudent(student['id']);
+                                        setState(() {
+                                          _students = DatabaseMethods().getStudents();
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
                         );
@@ -295,6 +278,41 @@ class _HomeState extends State<Home> {
             ),
           ],
         ),
+      ),
+      floatingActionButton: Stack(
+        children: [
+          Positioned(
+            bottom: 80,
+            right: 16,
+            child: FloatingActionButton(
+              heroTag: "logout",
+              backgroundColor: Colors.red,
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('isLoggedIn', false);
+                Navigator.pushReplacementNamed(context, '/login');
+              },
+              child: Icon(Icons.logout, color: Colors.white),
+              tooltip: 'Logout',
+            ),
+          ),
+          Positioned(
+            bottom: 16,
+            right: 16,
+            child: FloatingActionButton(
+              heroTag: "add",
+              backgroundColor: Colors.blue,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AddStudent()),
+                );
+              },
+              child: Icon(Icons.add, color: Colors.white),
+              tooltip: 'Tambah Mahasiswa',
+            ),
+          ),
+        ],
       ),
     );
   }

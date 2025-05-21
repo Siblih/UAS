@@ -6,8 +6,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:bcrypt/bcrypt.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
-
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
 
@@ -46,7 +44,6 @@ class _LoginPageState extends State<LoginPage> {
         final storedPassword = response['password'];
 
         if (BCrypt.checkpw(password, storedPassword)) {
-          // Simpan status login ke SharedPreferences
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('isLoggedIn', true);
 
@@ -194,10 +191,13 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 20),
                   FadeInUp(
-                    duration: const Duration(milliseconds: 1700),
-                    child: Center(
+                    duration: const Duration(milliseconds: 1800),
+                    child: Align(
+                      alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/forgot-password');
+                        },
                         child: const Text(
                           "Forgot Password?",
                           style: TextStyle(color: Color.fromRGBO(196, 135, 198, 1)),

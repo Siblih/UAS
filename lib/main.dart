@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uni_links/uni_links.dart';
 
 import 'pages/login.dart';
 import 'pages/register.dart';
 import 'pages/home.dart';
+import 'pages/forgotpasswordpage.dart';
+import 'pages/resetpasswordpage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,41 +25,78 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
-  // Cek status login dari SharedPreferences
-  Future<bool> checkLoginStatus() async {
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _isLoading = true;
+  bool _isLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initApp();
+  }
+
+  Future<void> _initApp() async {
+    await _checkLoginStatus();
+    await _checkInitialLink();
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool('isLoggedIn') ?? false;
+    _isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+  }
+
+  Future<void> _checkInitialLink() async {
+    final uri = await getInitialUri();
+    if (uri != null && uri.queryParameters.containsKey('code')) {
+      final code = uri.queryParameters['code'];
+      final supabase = Supabase.instance.client;
+
+      await supabase.auth.exchangeCodeForSession(code!);
+
+      // Simpan status login
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLoggedIn', true);
+
+      // Navigasi ke halaman reset password
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/reset-password');
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const MaterialApp(
+        home: Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
     return MaterialApp(
-      title: 'Attendance App',
+      title: 'Absenku',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: FutureBuilder<bool>(
-        future: checkLoginStatus(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
-          }
-
-          if (snapshot.data == true) {
-            return const Home(); // Sudah login
-          } else {
-            return const LoginPage(); // Belum login
-          }
-        },
-      ),
+      home: _isLoggedIn ? const Home() : const LoginPage(),
       routes: {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
         '/home': (context) => const Home(),
+        '/forgot-password': (context) => const ForgotPasswordPage(),
+        '/reset-password': (context) => const ResetPasswordPage(),
       },
     );
   }

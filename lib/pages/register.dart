@@ -13,7 +13,6 @@ class RegisterPage extends StatefulWidget {
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
-
 class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -22,45 +21,43 @@ class _RegisterPageState extends State<RegisterPage> {
   final DatabaseMethods _dbMethods = DatabaseMethods();
 
   Future<void> _handleRegister() async {
-  final username = _usernameController.text.trim();
-  final password = _passwordController.text;
-  final confirmPassword = _confirmPasswordController.text;
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
 
-  if (username.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
-    _showSnackbar('Semua kolom harus diisi', Colors.red);
-    return;
-  }
-
-  if (password != confirmPassword) {
-    _showSnackbar('Password tidak cocok', Colors.red);
-    return;
-  }
-
-  final hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
-
-  try {
-    // Periksa apakah username sudah ada
-    final existingUserResponse = await Supabase.instance.client
-        .from('users')
-        .select()
-        .eq('username', username)
-        .maybeSingle();// Mengambil satu baris
-    
-    if (existingUserResponse != null) {
-      _showSnackbar('Username sudah digunakan', Colors.red);
+    if (username.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+      _showSnackbar('Semua kolom harus diisi', Colors.red);
       return;
     }
 
-    // Jika tidak ada user yang sudah ada, lanjutkan untuk menambahkan user baru
-    await _dbMethods.addUser(username, hashedPassword);
+    if (password != confirmPassword) {
+      _showSnackbar('Password tidak cocok', Colors.red);
+      return;
+    }
 
-    _showSnackbar('Pendaftaran berhasil!', Colors.green);
-    Navigator.pushReplacementNamed(context, '/login');
-  } catch (e) {
-    print('Error saat mendaftar: $e');
-    _showSnackbar('Terjadi kesalahan saat mendaftar.', Colors.red);
+    final hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+
+    try {
+      final existingUserResponse = await Supabase.instance.client
+          .from('users')
+          .select()
+          .eq('username', username)
+          .maybeSingle();
+
+      if (existingUserResponse != null) {
+        _showSnackbar('Username sudah digunakan', Colors.red);
+        return;
+      }
+
+      await _dbMethods.addUser(username, hashedPassword);
+
+      _showSnackbar('Pendaftaran berhasil!', Colors.green);
+      Navigator.pushReplacementNamed(context, '/login');
+    } catch (e) {
+      print('Error saat mendaftar: $e');
+      _showSnackbar('Terjadi kesalahan saat mendaftar.', Colors.red);
+    }
   }
-}
 
   void _showSnackbar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -78,7 +75,6 @@ class _RegisterPageState extends State<RegisterPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            // Background
             Container(
               height: 400,
               child: Stack(
@@ -88,9 +84,9 @@ class _RegisterPageState extends State<RegisterPage> {
                     height: 400,
                     width: width,
                     child: FadeInUp(
-                      duration: Duration(seconds: 1),
+                      duration: const Duration(seconds: 1),
                       child: Container(
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           image: DecorationImage(
                             image: AssetImage('assets/images/background.png'),
                             fit: BoxFit.fill,
@@ -103,9 +99,9 @@ class _RegisterPageState extends State<RegisterPage> {
                     height: 400,
                     width: width + 20,
                     child: FadeInUp(
-                      duration: Duration(milliseconds: 1000),
+                      duration: const Duration(milliseconds: 1000),
                       child: Container(
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           image: DecorationImage(
                             image: AssetImage('assets/images/background-2.png'),
                             fit: BoxFit.fill,
@@ -117,18 +113,21 @@ class _RegisterPageState extends State<RegisterPage> {
                 ],
               ),
             ),
-
-            // Form input
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40),
+              padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                 
-                 
-FadeInUp(
-                    duration: Duration(milliseconds: 1500),
-                    child: Text(
+                  FadeInUp(
+                    duration: const Duration(milliseconds: 1300),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Color.fromRGBO(49, 39, 79, 1)),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                  FadeInUp(
+                    duration: const Duration(milliseconds: 1500),
+                    child: const Text(
                       "Register",
                       style: TextStyle(
                         color: Color.fromRGBO(49, 39, 79, 1),
@@ -137,16 +136,15 @@ FadeInUp(
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
-                  // Form fields
+                  const SizedBox(height: 10),
                   FadeInUp(
-                    duration: Duration(milliseconds: 1700),
+                    duration: const Duration(milliseconds: 1700),
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
                         color: Colors.white,
-                        border: Border.all(color: Color.fromRGBO(196, 135, 198, .3)),
-                        boxShadow: [
+                        border: Border.all(color: const Color.fromRGBO(196, 135, 198, .3)),
+                        boxShadow: const [
                           BoxShadow(
                             color: Color.fromRGBO(196, 135, 198, .3),
                             blurRadius: 20,
@@ -163,36 +161,34 @@ FadeInUp(
                       ),
                     ),
                   ),
-
-                  SizedBox(height: 30),
+                  const SizedBox(height: 10),
                   FadeInUp(
-                    duration: Duration(milliseconds: 2000),
+                    duration: const Duration(milliseconds: 2000),
                     child: Center(
                       child: TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: Text("Already have an account? Login",
-                            style: TextStyle(color: Color.fromRGBO(49, 39, 79, .6))),
+                        child: const Text(
+                          "Already have an account? Login",
+                          style: TextStyle(color: Color.fromRGBO(49, 39, 79, .6)),
+                        ),
                       ),
                     ),
                   ),
-
-                  SizedBox(height: 30),
+                  
                   FadeInUp(
-                    duration: Duration(milliseconds: 1900),
+                    duration: const Duration(milliseconds: 1900),
                     child: MaterialButton(
                       onPressed: _handleRegister,
-                      color: Color.fromRGBO(49, 39, 79, 1),
+                      color: const Color.fromRGBO(49, 39, 79, 1),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(50),
                       ),
                       height: 50,
-                      child: Center(
+                      child: const Center(
                         child: Text("Register", style: TextStyle(color: Colors.white)),
                       ),
                     ),
                   ),
-
-                 
                 ],
               ),
             ),
@@ -204,8 +200,8 @@ FadeInUp(
 
   Widget _buildTextField(TextEditingController controller, String hint, {bool obscure = false}) {
     return Container(
-      padding: EdgeInsets.all(10),
-      decoration: BoxDecoration(
+      padding: const EdgeInsets.all(10),
+      decoration: const BoxDecoration(
         border: Border(
           bottom: BorderSide(color: Color.fromRGBO(196, 135, 198, .3)),
         ),
