@@ -48,7 +48,6 @@ class _AddStudentState extends State<AddStudent> {
         margin: EdgeInsets.only(top: 60.0, left: 20.0, right: 20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          
           children: [
             Row(
               children: [
@@ -120,10 +119,8 @@ class _AddStudentState extends State<AddStudent> {
 
                     try {
                       if (widget.isEdit && widget.studentData != null) {
-                        // Update the existing student
                         await DatabaseMethods().updateStudent(widget.studentData!['id'], studentInfoMap);
                       } else {
-                        // Add a new student
                         String addID = randomAlphaNumeric(10);
                         await DatabaseMethods().addStudent(studentInfoMap, addID);
                       }
@@ -138,7 +135,7 @@ class _AddStudentState extends State<AddStudent> {
                         ),
                       );
 
-                      Navigator.pop(context); // Go back after saving
+                      Navigator.pop(context, true); // ✅ KEMBALI dengan hasil 'true' untuk trigger refresh
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

@@ -36,6 +36,7 @@ class _HomeState extends State<Home> {
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
+        _students = DatabaseMethods().getStudents();
       });
     }
   }
@@ -243,8 +244,8 @@ class _HomeState extends State<Home> {
                                   children: [
                                     IconButton(
                                       icon: Icon(Icons.edit, color: Colors.orange),
-                                      onPressed: () {
-                                        Navigator.push(
+                                      onPressed: () async {
+                                        final result = await Navigator.push(
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) => AddStudent(
@@ -253,6 +254,11 @@ class _HomeState extends State<Home> {
                                             ),
                                           ),
                                         );
+                                        if (result == true) {
+                                          setState(() {
+                                            _students = DatabaseMethods().getStudents();
+                                          });
+                                        }
                                       },
                                     ),
                                     IconButton(
@@ -302,11 +308,16 @@ class _HomeState extends State<Home> {
             child: FloatingActionButton(
               heroTag: "add",
               backgroundColor: Colors.blue,
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                final result = await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => AddStudent()),
                 );
+                if (result == true) {
+                  setState(() {
+                    _students = DatabaseMethods().getStudents();
+                  });
+                }
               },
               child: Icon(Icons.add, color: Colors.white),
               tooltip: 'Tambah Mahasiswa',

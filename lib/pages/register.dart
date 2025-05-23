@@ -7,7 +7,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../service/database.dart'; // Import class DatabaseMethods
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({Key? key}) : super(key: key);
+  final VoidCallback? onRegisterSuccess;
+
+  const RegisterPage({Key? key, this.onRegisterSuccess}) : super(key: key);
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -51,8 +53,13 @@ class _RegisterPageState extends State<RegisterPage> {
 
       await _dbMethods.addUser(username, hashedPassword);
 
+      // Panggil callback untuk update data di halaman sebelumnya
+      widget.onRegisterSuccess?.call();
+
       _showSnackbar('Pendaftaran berhasil!', Colors.green);
-      Navigator.pushReplacementNamed(context, '/login');
+
+      // Kembali ke halaman sebelumnya
+      Navigator.pop(context);
     } catch (e) {
       print('Error saat mendaftar: $e');
       _showSnackbar('Terjadi kesalahan saat mendaftar.', Colors.red);
