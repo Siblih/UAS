@@ -27,11 +27,26 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
   }
 
   Future<void> _initializeCamera() async {
-    _cameras = await availableCameras();
-    _controller = CameraController(_cameras[1], ResolutionPreset.medium);
-    await _controller?.initialize();
-    if (mounted) setState(() {});
+  _cameras = await availableCameras();
+
+  if (_cameras.isEmpty) {
+    setState(() {
+      _resultText = "Tidak ada kamera tersedia.";
+    });
+    return;
   }
+
+  // Gunakan kamera depan jika tersedia, jika tidak kamera pertama
+  final frontCamera = _cameras.firstWhere(
+    (camera) => camera.lensDirection == CameraLensDirection.front,
+    orElse: () => _cameras.first,
+  );
+
+  _controller = CameraController(frontCamera, ResolutionPreset.medium);
+  await _controller?.initialize();
+
+  if (mounted) setState(() {});
+}
 
   Future<void> _captureAndDetectFace() async {
     if (_controller == null || !_controller!.value.isInitialized) return;
@@ -41,7 +56,7 @@ class _FaceDetectionPageState extends State<FaceDetectionPage> {
     final XFile imageFile = await _controller!.takePicture();
     final File file = File(imageFile.path);
 
-    final uri = Uri.parse('http://<YOUR_SERVER_IP>:5000/detect'); // Ganti dengan IP server kamu
+    final uri = Uri.parse('http://192.168.0.103:5000'); // Ganti dengan IP server kamu
 
     var request = http.MultipartRequest('POST', uri);
     request.files.add(await http.MultipartFile.fromPath('image', file.path));

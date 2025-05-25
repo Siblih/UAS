@@ -1,4 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+<!-- Izinkan akses kamera -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Deklarasikan fitur kamera (tidak wajib, tapi disarankan) -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.front" android:required="false" />
+    
     <application
         android:label="project_uas"
         android:name="${applicationName}"
