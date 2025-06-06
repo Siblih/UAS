@@ -1,10 +1,13 @@
-// ignore_for_file: use_build_context_synchronously, sort_child_properties_last
+// ignore_for_file: use_build_context_synchronously, sort_child_properties_last, unused_import
 
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:project_uas/pages/add_student.dart';
 import 'package:project_uas/pages/face_detection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../service/database.dart';
 
 class Home extends StatefulWidget {
@@ -45,6 +48,36 @@ class _HomeState extends State<Home> {
     return DateFormat('yyyy-MM-dd').format(date);
   }
 
+  Future<void> uploadPhotoFromGallery(String nim) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      final fileBytes = await pickedFile.readAsBytes();
+      final fileExt = pickedFile.path.split('.').last;
+      final fileName = '$nim.$fileExt';
+      final storagePath = 'photos/$fileName';
+
+      final supabase = Supabase.instance.client;
+
+      await supabase.storage
+          .from('student-photos')
+          .uploadBinary(storagePath, fileBytes, fileOptions: FileOptions(upsert: true));
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Foto berhasil diunggah.')));
+      setState(() {
+        _students = DatabaseMethods().getStudents();
+      });
+    }
+  }
+
+  String getPhotoUrl(String nim) {
+    final ext = 'jpg'; // bisa disesuaikan jika perlu
+    return Supabase.instance.client.storage
+        .from('student-photos')
+        .getPublicUrl('photos/$nim.$ext');
+  }
+
   @override
   Widget build(BuildContext context) {
     String shortDate = _formatShortDate(_selectedDate);
@@ -57,29 +90,15 @@ class _HomeState extends State<Home> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  "Data ",
-                  style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  "Mahasiswa",
-                  style: TextStyle(
-                    color: Colors.blue,
-                    fontSize: 26.0,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text("Data ", style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.bold)),
+                Text("Mahasiswa", style: TextStyle(color: Colors.blue, fontSize: 26.0, fontWeight: FontWeight.bold)),
               ],
             ),
             SizedBox(height: 40.0),
             Center(
               child: Column(
                 children: [
-                  Text(
-                    _formatter.format(_selectedDate),
-                    style: TextStyle(fontSize: 22.0, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
+                  Text(_formatter.format(_selectedDate), style: TextStyle(fontSize: 22.0, fontWeight: FontWeight.bold)),
                   SizedBox(height: 8.0),
                   ElevatedButton.icon(
                     onPressed: _pickDate,
@@ -89,10 +108,7 @@ class _HomeState extends State<Home> {
                   SizedBox(height: 12.0),
                   ElevatedButton.icon(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const FaceDetectionPage()),
-                      );
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const FaceDetectionPage()));
                     },
                     icon: Icon(Icons.face),
                     label: Text("Deteksi Wajah"),
@@ -103,183 +119,134 @@ class _HomeState extends State<Home> {
             FutureBuilder<List<Map<String, dynamic>>>(
               future: _students,
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text('Tidak ada data mahasiswa.'));
-                } else {
-                  final students = snapshot.data!
-                      .where((student) => student['absensi_tanggal'] == shortDate)
-                      .toList();
+                if (snapshot.connectionState == ConnectionState.waiting) return Center(child: CircularProgressIndicator());
+                if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
+                if (!snapshot.hasData || snapshot.data!.isEmpty) return Center(child: Text('Tidak ada data mahasiswa.'));
 
-                  if (students.isEmpty) {
-                    return Expanded(child: Center(child: Text("Tidak ada data pada tanggal ini.")));
-                  }
+                final students = snapshot.data!
+                    .where((student) => student['absensi_tanggal'] == shortDate)
+                    .toList();
 
-                  return Expanded(
-                    child: ListView.builder(
-                      itemCount: students.length,
-                      itemBuilder: (context, index) {
-                        var student = students[index];
-                        String attendance = student['absensi'] ?? 'A';
+                if (students.isEmpty) return Expanded(child: Center(child: Text("Tidak ada data pada tanggal ini.")));
 
-                        return Container(
-                          margin: EdgeInsets.only(bottom: 16.0),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Colors.blue.shade50, Colors.white],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(12.0),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 6.0,
-                                offset: Offset(0, 3),
+                return Expanded(
+                  child: ListView.builder(
+                    itemCount: students.length,
+                    itemBuilder: (context, index) {
+                      var student = students[index];
+                      String attendance = student['absensi'] ?? 'A';
+                      String nim = student['nim'].toString();
+                      String imageUrl = getPhotoUrl(nim);
+
+                      return Container(
+                        margin: EdgeInsets.only(bottom: 16.0),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: [Colors.blue.shade50, Colors.white]),
+                          borderRadius: BorderRadius.circular(12.0),
+                          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6.0, offset: Offset(0, 3))],
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundColor: Colors.blue.shade200,
+                                    radius: 25,
+                                    backgroundImage: NetworkImage(imageUrl),
+                                    onBackgroundImageError: (_, __) => Icon(Icons.person, color: Colors.white),
+                                  ),
+                                  SizedBox(width: 12.0),
+                                  Expanded(
+                                    child: Text(
+                                      student['nama'] ?? "Tidak ada nama",
+                                      style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold, color: Colors.blue.shade700),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.camera_alt, color: Colors.blue),
+                                    onPressed: () => uploadPhotoFromGallery(nim),
+                                  )
+                                ],
                               ),
-                            ],
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    CircleAvatar(
-                                      backgroundColor: Colors.blue.shade200,
-                                      child: Icon(Icons.person, color: Colors.white),
-                                    ),
-                                    SizedBox(width: 12.0),
-                                    Expanded(
-                                      child: Text(
-                                        student['nama'] ?? "Tidak ada nama",
-                                        style: TextStyle(
-                                          fontSize: 20.0,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.blue.shade700,
+                              Divider(height: 20.0, color: Colors.blue.shade100),
+                              Row(
+                                children: [
+                                  Text("NIM: ", style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600)),
+                                  Flexible(child: Text(nim, style: TextStyle(fontSize: 16.0))),
+                                ],
+                              ),
+                              SizedBox(height: 4.0),
+                              Row(
+                                children: [
+                                  Text("Semester: ", style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600)),
+                                  Flexible(child: Text(student['semester'] ?? "-", style: TextStyle(fontSize: 16.0))),
+                                ],
+                              ),
+                              SizedBox(height: 10.0),
+                              Row(
+                                children: [
+                                  Text("Absensi:", style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold)),
+                                  SizedBox(width: 12.0),
+                                  for (var absen in ['H', 'A', 'I'])
+                                    Padding(
+                                      padding: EdgeInsets.only(right: 10.0),
+                                      child: Container(
+                                        width: 50,
+                                        padding: EdgeInsets.all(6.0),
+                                        decoration: BoxDecoration(
+                                          color: attendance == absen
+                                              ? (absen == 'H' ? Colors.green : absen == 'A' ? Colors.red : Colors.yellow.shade700)
+                                              : Colors.grey.shade300,
+                                          borderRadius: BorderRadius.circular(8.0),
+                                        ),
+                                        child: Center(
+                                          child: Text(absen, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                         ),
                                       ),
                                     ),
-                                  ],
-                                ),
-                                Divider(height: 20.0, color: Colors.blue.shade100),
-                                Row(
-                                  children: [
-                                    Text(
-                                      "NIM: ",
-                                      style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600),
-                                    ),
-                                    Flexible(
-                                      child: Text(
-                                        (student['nim'] is int)
-                                            ? student['nim'].toString()
-                                            : student['nim'] ?? "Tidak ada NIM",
-                                        style: TextStyle(fontSize: 16.0),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 4.0),
-                                Row(
-                                  children: [
-                                    Text(
-                                      "Semester: ",
-                                      style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600),
-                                    ),
-                                    Flexible(
-                                      child: Text(
-                                        student['semester'] ?? "Tidak ada semester",
-                                        style: TextStyle(fontSize: 16.0),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 10.0),
-                                Row(
-                                  children: [
-                                    Text("Absensi:",
-                                        style: TextStyle(
-                                            fontSize: 18.0,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black87)),
-                                    SizedBox(width: 12.0),
-                                    for (var absen in ['H', 'A', 'I'])
-                                      Padding(
-                                        padding: EdgeInsets.only(right: 10.0),
-                                        child: Container(
-                                          width: 50,
-                                          padding: EdgeInsets.all(6.0),
-                                          decoration: BoxDecoration(
-                                            color: attendance == absen
-                                                ? (absen == 'H'
-                                                    ? Colors.green
-                                                    : absen == 'A'
-                                                        ? Colors.red
-                                                        : Colors.yellow.shade700)
-                                                : Colors.grey.shade300,
-                                            borderRadius: BorderRadius.circular(8.0),
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              absen,
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
+                                ],
+                              ),
+                              SizedBox(height: 12.0),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(Icons.edit, color: Colors.orange),
+                                    onPressed: () async {
+                                      final result = await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => AddStudent(isEdit: true, studentData: student),
                                         ),
-                                      ),
-                                  ],
-                                ),
-                                SizedBox(height: 12.0),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    IconButton(
-                                      icon: Icon(Icons.edit, color: Colors.orange),
-                                      onPressed: () async {
-                                        final result = await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => AddStudent(
-                                              isEdit: true,
-                                              studentData: student,
-                                            ),
-                                          ),
-                                        );
-                                        if (result == true) {
-                                          setState(() {
-                                            _students = DatabaseMethods().getStudents();
-                                          });
-                                        }
-                                      },
-                                    ),
-                                    IconButton(
-                                      icon: Icon(Icons.delete, color: Colors.red),
-                                      onPressed: () async {
-                                        await DatabaseMethods().deleteStudent(student['id']);
+                                      );
+                                      if (result == true) {
                                         setState(() {
                                           _students = DatabaseMethods().getStudents();
                                         });
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                                      }
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.delete, color: Colors.red),
+                                    onPressed: () async {
+                                      await DatabaseMethods().deleteStudent(student['id']);
+                                      setState(() {
+                                        _students = DatabaseMethods().getStudents();
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                        );
-                      },
-                    ),
-                  );
-                }
+                        ),
+                      );
+                    },
+                  ),
+                );
               },
             ),
           ],
@@ -309,10 +276,7 @@ class _HomeState extends State<Home> {
               heroTag: "add",
               backgroundColor: Colors.blue,
               onPressed: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AddStudent()),
-                );
+                final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => AddStudent()));
                 if (result == true) {
                   setState(() {
                     _students = DatabaseMethods().getStudents();

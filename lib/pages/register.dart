@@ -6,6 +6,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../service/database.dart'; // Import class DatabaseMethods
 
+
 class RegisterPage extends StatefulWidget {
   final VoidCallback? onRegisterSuccess;
 

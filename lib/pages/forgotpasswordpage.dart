@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:animate_do/animate_do.dart';
 
+
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({Key? key}) : super(key: key);
 
@@ -29,10 +30,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     }
 
     try {
-      // Kirim email reset password
       await supabase.auth.resetPasswordForEmail(
         email,
-        redirectTo: 'http://127.0.0.1:9101?uri=http://127.0.0.1:52750/DgZe_aSh4GA=/', // GANTI dengan URL kamu
+        redirectTo: 'http://127.0.0.1:9101?uri=http://127.0.0.1:52750/DgZe_aSh4GA=/', // GANTI dengan URL redirect-mu
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -47,6 +47,23 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal mengirim email: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    try {
+      await supabase.auth.signInWithOAuth(
+        OAuthProvider.google,
+
+        redirectTo: 'http://localhost:52207/', // Ganti sesuai redirect URL di Supabase
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Login Google gagal: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -172,6 +189,27 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       height: 50,
                       child: const Center(
                         child: Text("Kirim Link Reset", style: TextStyle(color: Colors.white)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  FadeInUp(
+                    duration: const Duration(milliseconds: 2000),
+                    child: MaterialButton(
+                      onPressed: _signInWithGoogle,
+                      color: Colors.redAccent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      height: 50,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.g_mobiledata, color: Colors.white),
+                          SizedBox(width: 10),
+                          Text("Login dengan Google", style: TextStyle(color: Colors.white)),
+                        ],
                       ),
                     ),
                   ),
