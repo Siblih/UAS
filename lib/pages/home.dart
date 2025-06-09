@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously, sort_child_properties_last, unused_import
+// ignore_for_file: use_build_context_synchronously, sort_child_properties_last, unused_import, avoid_returning_null_for_void
 
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -53,16 +53,26 @@ class _HomeState extends State<Home> {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
-      final fileBytes = await pickedFile.readAsBytes();
       final fileExt = pickedFile.path.split('.').last;
-      final fileName = '$nim.$fileExt';
-      final storagePath = 'photos/$fileName';
+if (!['jpg', 'jpeg', 'png'].contains(fileExt.toLowerCase())) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Format file tidak didukung.')));
+  return;
+}
+
+final fileBytes = await pickedFile.readAsBytes();
+final fileName = '$nim.$fileExt';
+final storagePath = 'photos/$fileName';
+
 
       final supabase = Supabase.instance.client;
 
       await supabase.storage
           .from('student-photos')
           .uploadBinary(storagePath, fileBytes, fileOptions: FileOptions(upsert: true));
+await supabase
+        .from('mahasiswa')
+        .update({'foto': fileName})
+        .eq('nim', nim);
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Foto berhasil diunggah.')));
       setState(() {
@@ -71,12 +81,12 @@ class _HomeState extends State<Home> {
     }
   }
 
-  String getPhotoUrl(String nim) {
-    final ext = 'jpg'; // bisa disesuaikan jika perlu
-    return Supabase.instance.client.storage
-        .from('student-photos')
-        .getPublicUrl('photos/$nim.$ext');
+  String getPhotoUrl(String? fotoFileName) {
+    if (fotoFileName == null || fotoFileName.isEmpty) return '';
+    final supabase = Supabase.instance.client;
+    return supabase.storage.from('student-photos').getPublicUrl('photos/$fotoFileName');
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +146,8 @@ class _HomeState extends State<Home> {
                       var student = students[index];
                       String attendance = student['absensi'] ?? 'A';
                       String nim = student['nim'].toString();
-                      String imageUrl = getPhotoUrl(nim);
+                      String imageUrl = getPhotoUrl(student['foto']);
+
 
                       return Container(
                         margin: EdgeInsets.only(bottom: 16.0),
@@ -153,11 +164,13 @@ class _HomeState extends State<Home> {
                               Row(
                                 children: [
                                   CircleAvatar(
-                                    backgroundColor: Colors.blue.shade200,
-                                    radius: 25,
-                                    backgroundImage: NetworkImage(imageUrl),
-                                    onBackgroundImageError: (_, __) => Icon(Icons.person, color: Colors.white),
-                                  ),
+  backgroundColor: Colors.blue.shade200,
+  radius: 25,
+  backgroundImage: NetworkImage(imageUrl),
+  onBackgroundImageError: (_, __) => null,
+  child: Icon(Icons.person, color: Colors.white),
+),
+
                                   SizedBox(width: 12.0),
                                   Expanded(
                                     child: Text(
